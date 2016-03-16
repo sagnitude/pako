@@ -11,8 +11,6 @@ var pako = {};
 
 assign(pako, deflate, constants);
 
-window.pako = pako;
-
 module.exports = pako;
 
 },{"../lib/deflate":2,"../lib/utils/common":3,"../lib/zlib/constants":6}],2:[function(require,module,exports){

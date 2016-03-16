@@ -11,6 +11,4 @@ var pako = {};
 
 assign(pako, deflate, inflate, constants);
 
-window.pako = pako;
-
 module.exports = pako;
