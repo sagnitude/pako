@@ -1,4 +1,22 @@
-/* pako 1.0.0 nodeca/pako */(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.pako = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.pako = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+// Top level file is just a mixin of submodules & constants
+'use strict';
+
+var assign    = require('../lib/utils/common').assign;
+
+var inflate   = require('../lib/inflate');
+var deflate   = require('../lib/deflate');
+var constants = require('../lib/zlib/constants');
+
+var pako = {};
+
+assign(pako, deflate, inflate, constants);
+
+window.pako = pako;
+
+module.exports = pako;
+
+},{"../lib/deflate":2,"../lib/inflate":3,"../lib/utils/common":4,"../lib/zlib/constants":7}],2:[function(require,module,exports){
 'use strict';
 
 
@@ -377,7 +395,7 @@ exports.deflate = deflate;
 exports.deflateRaw = deflateRaw;
 exports.gzip = gzip;
 
-},{"./utils/common":3,"./utils/strings":4,"./zlib/deflate":8,"./zlib/messages":13,"./zlib/zstream":15}],2:[function(require,module,exports){
+},{"./utils/common":4,"./utils/strings":5,"./zlib/deflate":9,"./zlib/messages":14,"./zlib/zstream":16}],3:[function(require,module,exports){
 'use strict';
 
 
@@ -553,7 +571,7 @@ function Inflate(options) {
  * push(chunk, true);  // push last chunk
  * ```
  **/
-Inflate.prototype.push = function (data, mode) {
+Inflate.prototype.push = function (data, mode, noCRC) {
   var strm = this.strm;
   var chunkSize = this.options.chunkSize;
   var status, _mode;
@@ -586,7 +604,7 @@ Inflate.prototype.push = function (data, mode) {
       strm.avail_out = chunkSize;
     }
 
-    status = zlib_inflate.inflate(strm, c.Z_NO_FLUSH);    /* no bad return value */
+    status = zlib_inflate.inflate(strm, c.Z_NO_FLUSH, noCRC);    /* no bad return value */
 
     if (status === c.Z_BUF_ERROR && allowBufError === true) {
       status = c.Z_OK;
@@ -741,7 +759,7 @@ Inflate.prototype.onEnd = function (status) {
 function inflate(input, options) {
   var inflator = new Inflate(options);
 
-  inflator.push(input, true);
+  inflator.push(input, true, (options || {})['noCRC']);
 
   // That will never happens, if you don't cheat with options :)
   if (inflator.err) { throw inflator.msg; }
@@ -780,7 +798,7 @@ exports.inflate = inflate;
 exports.inflateRaw = inflateRaw;
 exports.ungzip  = inflate;
 
-},{"./utils/common":3,"./utils/strings":4,"./zlib/constants":6,"./zlib/gzheader":9,"./zlib/inflate":11,"./zlib/messages":13,"./zlib/zstream":15}],3:[function(require,module,exports){
+},{"./utils/common":4,"./utils/strings":5,"./zlib/constants":7,"./zlib/gzheader":10,"./zlib/inflate":12,"./zlib/messages":14,"./zlib/zstream":16}],4:[function(require,module,exports){
 'use strict';
 
 
@@ -884,7 +902,7 @@ exports.setTyped = function (on) {
 
 exports.setTyped(TYPED_OK);
 
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 // String encode/decode helpers
 'use strict';
 
@@ -1071,7 +1089,7 @@ exports.utf8border = function (buf, max) {
   return (pos + _utf8len[buf[pos]] > max) ? pos : max;
 };
 
-},{"./common":3}],5:[function(require,module,exports){
+},{"./common":4}],6:[function(require,module,exports){
 'use strict';
 
 // Note: adler32 takes 12% for level 0 and 2% for level 6.
@@ -1105,7 +1123,7 @@ function adler32(adler, buf, len, pos) {
 
 module.exports = adler32;
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 'use strict';
 
 
@@ -1157,7 +1175,7 @@ module.exports = {
   //Z_NULL:                 null // Use -1 or null inline, depending on var type
 };
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 'use strict';
 
 // Note: we can't get significant speed boost here.
@@ -1200,7 +1218,7 @@ function crc32(crc, buf, len, pos) {
 
 module.exports = crc32;
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 'use strict';
 
 var utils   = require('../utils/common');
@@ -2967,7 +2985,7 @@ exports.deflatePrime = deflatePrime;
 exports.deflateTune = deflateTune;
 */
 
-},{"../utils/common":3,"./adler32":5,"./crc32":7,"./messages":13,"./trees":14}],9:[function(require,module,exports){
+},{"../utils/common":4,"./adler32":6,"./crc32":8,"./messages":14,"./trees":15}],10:[function(require,module,exports){
 'use strict';
 
 
@@ -3009,7 +3027,7 @@ function GZheader() {
 
 module.exports = GZheader;
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 'use strict';
 
 // See state defs from inflate.js
@@ -3337,7 +3355,7 @@ module.exports = function inflate_fast(strm, start) {
   return;
 };
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 'use strict';
 
 
@@ -3700,7 +3718,7 @@ function updatewindow(strm, src, end, copy) {
   return 0;
 }
 
-function inflate(strm, flush) {
+function inflate(strm, flush, noCRC) {
   var state;
   var input, output;          // input/output buffers
   var next;                   /* next input INDEX */
@@ -3769,10 +3787,12 @@ function inflate(strm, flush) {
       //===//
       if ((state.wrap & 2) && hold === 0x8b1f) {  /* gzip header */
         state.check = 0/*crc32(0L, Z_NULL, 0)*/;
-        //=== CRC2(state.check, hold);
-        hbuf[0] = hold & 0xff;
-        hbuf[1] = (hold >>> 8) & 0xff;
-        state.check = crc32(state.check, hbuf, 2, 0);
+        if (!noCRC) {
+          //=== CRC2(state.check, hold);
+          hbuf[0] = hold & 0xff;
+          hbuf[1] = (hold >>> 8) & 0xff;
+          state.check = crc32(state.check, hbuf, 2, 0);
+        }
         //===//
 
         //=== INITBITS();
@@ -3786,7 +3806,7 @@ function inflate(strm, flush) {
       if (state.head) {
         state.head.done = false;
       }
-      if (!(state.wrap & 1) ||   /* check if zlib header allowed */
+      if (noCRC) {} else if (!(state.wrap & 1) ||   /* check if zlib header allowed */
         (((hold & 0xff)/*BITS(8)*/ << 8) + (hold >> 8)) % 31) {
         strm.msg = 'incorrect header check';
         state.mode = BAD;
@@ -3842,7 +3862,7 @@ function inflate(strm, flush) {
       if (state.head) {
         state.head.text = ((hold >> 8) & 1);
       }
-      if (state.flags & 0x0200) {
+      if (noCRC) {} else if (state.flags & 0x0200) {
         //=== CRC2(state.check, hold);
         hbuf[0] = hold & 0xff;
         hbuf[1] = (hold >>> 8) & 0xff;
@@ -3867,7 +3887,7 @@ function inflate(strm, flush) {
       if (state.head) {
         state.head.time = hold;
       }
-      if (state.flags & 0x0200) {
+      if (noCRC) {} else if (state.flags & 0x0200) {
         //=== CRC4(state.check, hold)
         hbuf[0] = hold & 0xff;
         hbuf[1] = (hold >>> 8) & 0xff;
@@ -3895,7 +3915,7 @@ function inflate(strm, flush) {
         state.head.xflags = (hold & 0xff);
         state.head.os = (hold >> 8);
       }
-      if (state.flags & 0x0200) {
+      if (noCRC) {} else if (state.flags & 0x0200) {
         //=== CRC2(state.check, hold);
         hbuf[0] = hold & 0xff;
         hbuf[1] = (hold >>> 8) & 0xff;
@@ -3922,7 +3942,7 @@ function inflate(strm, flush) {
         if (state.head) {
           state.head.extra_len = hold;
         }
-        if (state.flags & 0x0200) {
+        if (noCRC) {} else if (state.flags & 0x0200) {
           //=== CRC2(state.check, hold);
           hbuf[0] = hold & 0xff;
           hbuf[1] = (hold >>> 8) & 0xff;
@@ -3964,7 +3984,7 @@ function inflate(strm, flush) {
             //        len + copy > state.head.extra_max ?
             //        state.head.extra_max - len : copy);
           }
-          if (state.flags & 0x0200) {
+          if (noCRC) {} else if (state.flags & 0x0200) {
             state.check = crc32(state.check, input, copy, next);
           }
           have -= copy;
@@ -3990,7 +4010,7 @@ function inflate(strm, flush) {
           }
         } while (len && copy < have);
 
-        if (state.flags & 0x0200) {
+        if (noCRC) {} else if (state.flags & 0x0200) {
           state.check = crc32(state.check, input, copy, next);
         }
         have -= copy;
@@ -4015,7 +4035,7 @@ function inflate(strm, flush) {
             state.head.comment += String.fromCharCode(len);
           }
         } while (len && copy < have);
-        if (state.flags & 0x0200) {
+        if (noCRC) {} else if (state.flags & 0x0200) {
           state.check = crc32(state.check, input, copy, next);
         }
         have -= copy;
@@ -4037,7 +4057,8 @@ function inflate(strm, flush) {
           bits += 8;
         }
         //===//
-        if (hold !== (state.check & 0xffff)) {
+        if (noCRC) {} else if (hold !== (state.check & 0xffff)) {
+          //noCRC Check: CRC Output Here
           strm.msg = 'header crc mismatch';
           state.mode = BAD;
           break;
@@ -4690,7 +4711,7 @@ function inflate(strm, flush) {
         _out -= left;
         strm.total_out += _out;
         state.total += _out;
-        if (_out) {
+        if (noCRC) {} else if (_out) {
           strm.adler = state.check =
               /*UPDATE(state.check, put - _out, _out);*/
               (state.flags ? crc32(state.check, output, _out, put - _out) : adler32(state.check, output, _out, put - _out));
@@ -4698,7 +4719,8 @@ function inflate(strm, flush) {
         }
         _out = left;
         // NB: crc32 stored as signed 32-bit int, zswap32 returns signed too
-        if ((state.flags ? hold : zswap32(hold)) !== state.check) {
+        if (noCRC) {} else if ((state.flags ? hold : zswap32(hold)) !== state.check) {
+          //noCRC Check: CRC Output Here
           strm.msg = 'incorrect data check';
           state.mode = BAD;
           break;
@@ -4779,7 +4801,7 @@ function inflate(strm, flush) {
   strm.total_in += _in;
   strm.total_out += _out;
   state.total += _out;
-  if (state.wrap && _out) {
+  if (noCRC) {} else if (state.wrap && _out) {
     strm.adler = state.check = /*UPDATE(state.check, strm.next_out - _out, _out);*/
       (state.flags ? crc32(state.check, output, _out, strm.next_out - _out) : adler32(state.check, output, _out, strm.next_out - _out));
   }
@@ -4842,7 +4864,7 @@ exports.inflateSyncPoint = inflateSyncPoint;
 exports.inflateUndermine = inflateUndermine;
 */
 
-},{"../utils/common":3,"./adler32":5,"./crc32":7,"./inffast":10,"./inftrees":12}],12:[function(require,module,exports){
+},{"../utils/common":4,"./adler32":6,"./crc32":8,"./inffast":11,"./inftrees":13}],13:[function(require,module,exports){
 'use strict';
 
 
@@ -5171,7 +5193,7 @@ module.exports = function inflate_table(type, lens, lens_index, codes, table, ta
   return 0;
 };
 
-},{"../utils/common":3}],13:[function(require,module,exports){
+},{"../utils/common":4}],14:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -5186,7 +5208,7 @@ module.exports = {
   '-6':   'incompatible version' /* Z_VERSION_ERROR (-6) */
 };
 
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 'use strict';
 
 
@@ -6390,7 +6412,7 @@ exports._tr_flush_block  = _tr_flush_block;
 exports._tr_tally = _tr_tally;
 exports._tr_align = _tr_align;
 
-},{"../utils/common":3}],15:[function(require,module,exports){
+},{"../utils/common":4}],16:[function(require,module,exports){
 'use strict';
 
 
@@ -6421,21 +6443,5 @@ function ZStream() {
 
 module.exports = ZStream;
 
-},{}],"/":[function(require,module,exports){
-// Top level file is just a mixin of submodules & constants
-'use strict';
-
-var assign    = require('./lib/utils/common').assign;
-
-var deflate   = require('./lib/deflate');
-var inflate   = require('./lib/inflate');
-var constants = require('./lib/zlib/constants');
-
-var pako = {};
-
-assign(pako, deflate, inflate, constants);
-
-module.exports = pako;
-
-},{"./lib/deflate":1,"./lib/inflate":2,"./lib/utils/common":3,"./lib/zlib/constants":6}]},{},[])("/")
+},{}]},{},[1])(1)
 });
